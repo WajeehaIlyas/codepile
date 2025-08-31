@@ -132,7 +132,7 @@ pub fn lex_manually(input: &str) -> Result<Vec<Token>, LexError> {
                         column += 1;
                     } else {
                         break;
-                    }5
+                    }
                 }
                 if let Some(token) = keywords.get(ident.as_str()) {
                     tokens.push(token.clone());
@@ -272,7 +272,6 @@ pub fn lex_manually(input: &str) -> Result<Vec<Token>, LexError> {
             }
         }
     }
-
     tokens.push(Token::EOF);
     Ok(tokens)
 }
