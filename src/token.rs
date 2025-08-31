@@ -23,47 +23,47 @@ pub enum Token {
     StringLit(String),
 
     // Operators
-    Assign,       // =
-    Equals,       // ==
-    NotEquals,    // !=
-    Less,         // <
-    Greater,      // >
-    LessEq,       // <=
-    GreaterEq,    // >=
-    Plus,         // +
-    Minus,        // -
-    Mul,          // *
-    Div,          // /
-    Mod,          // %
-    And,          // &&
-    Or,           // ||
-    Not,         // !
+    Assign,    // =
+    Equals,    // ==
+    NotEquals, // !=
+    Less,      // <
+    Greater,   // >
+    LessEq,    // <=
+    GreaterEq, // >=
+    Plus,      // +
+    Minus,     // -
+    Mul,       // *
+    Div,       // /
+    Mod,       // %
+    And,       // &&
+    Or,        // ||
+    Not,       // !
 
     //Bitwise Operators
-    BitAnd,       // &
-    BitOr,        // |
-    BitXor,       // ^
-    BitNot,       // ~
-    ShiftLeft,    // <<
-    ShiftRight,   // >>
+    BitAnd,     // &
+    BitOr,      // |
+    BitXor,     // ^
+    BitNot,     // ~
+    ShiftLeft,  // <<
+    ShiftRight, // >>
     // Increment/Decrement
-    Increment,    // ++
-    Decrement,    // --
+    Increment, // ++
+    Decrement, // --
     // Compound Assignment
-    PlusAssign,   // +=
-    MinusAssign,  // -=
+    PlusAssign,  // +=
+    MinusAssign, // -=
 
     // Delimiters & Symbols
-    ParenL,       // (
-    ParenR,       // )
-    BraceL,       // {
-    BraceR,       // }
-    BracketL,     // [
-    BracketR,     // ]
-    Comma,        // ,
-    Semicolon,    // ;
-    Colon,        // :
-    
+    ParenL,    // (
+    ParenR,    // )
+    BraceL,    // {
+    BraceR,    // }
+    BracketL,  // [
+    BracketR,  // ]
+    Comma,     // ,
+    Semicolon, // ;
+    Colon,     // :
+
     EOF,
 
     Invalid(String),

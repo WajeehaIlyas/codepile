@@ -1,21 +1,25 @@
-fn main() {
+// Single-line comment
+/* Multi-line
+   comment should be ignored */
+
+int main() {
     int a = 10;
     float b = 3.14;
-    string msg = "Hello\tWorld\n\"Quote\" 🌍";
+    string s = "Hello\nWorld\t!";
     bool flag = true;
+    bool eqTest = (a == 10) && (b != 0.0);
 
+    a += 5;
+    b -= 2.5;
     a++;
-    b -= 1.0;
+    b--;
 
-    if (a >= 10 && flag != false) {
-        while (a < 20) {
-            a = a + 1;
-        }
+    if (a >= b && !(flag || false)) {
+        return 1;
     } else {
-        for (int i = 0; i < 5; i++) {
-            msg = msg + "!";
-        }
+        return 0;
     }
-    string 🌍 = "hi there";
-    return a;
+
+    // Edge cases:
+    int abc = 42;  // invalid identifier (digit + letters)
 }

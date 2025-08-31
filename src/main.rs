@@ -1,9 +1,10 @@
-mod token;
-mod regex_lex;
 mod manual_lex;
+mod regex_lex;
+mod token;
+mod utils;
 
-use regex_lex::lex_with_regex;
 use manual_lex::lex_manually;
+use regex_lex::lex_with_regex;
 use token::Token;
 
 fn main() {
@@ -18,21 +19,26 @@ fn main() {
     let lexer = &args[1];
     let file = &args[2];
 
-    let input = std::fs::read_to_string(file)
-        .expect("Failed to read input file");
+    let input = std::fs::read_to_string(file).expect("Failed to read input file");
 
     let tokens: Vec<Token> = match lexer.as_str() {
         "regex" => match lex_with_regex(&input) {
             Ok(toks) => toks,
             Err(e) => {
-                eprintln!("Regex Lexer Error at line {}, column {}: {}", e.line, e.column, e.message);
+                eprintln!(
+                    "Regex Lexer Error at line {}, column {}: {}",
+                    e.line, e.column, e.message
+                );
                 std::process::exit(1);
             }
         },
         "manual" => match lex_manually(&input) {
             Ok(toks) => toks,
             Err(e) => {
-                eprintln!("Manual Lexer Error at line {}, column {}: {}", e.line, e.column, e.message);
+                eprintln!(
+                    "Manual Lexer Error at line {}, column {}: {}",
+                    e.line, e.column, e.message
+                );
                 std::process::exit(1);
             }
         },
