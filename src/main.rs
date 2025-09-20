@@ -49,6 +49,12 @@ fn main() {
     };
 
     for token in tokens {
-        println!("{:?}", token);
+        // Use a match statement to print the token correctly
+        match token {
+            // For StringLit, use the standard formatter to print the unescaped string
+            Token::StringLit(s) => println!("StringLit(\"{}\")", s),
+            // For all other tokens, use the Debug formatter
+            _ => println!("{:?}", token),
+        }
     }
 }
