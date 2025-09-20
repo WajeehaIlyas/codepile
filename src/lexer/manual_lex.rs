@@ -1,4 +1,4 @@
-use crate::token::Token;
+use crate::lexer::token::Token;
 use std::collections::HashMap;
 use crate::utils::{is_identifier_start,is_identifier_part,parse_int,parse_float,unescape_char,
 };

@@ -1,4 +1,4 @@
-use crate::token::Token;
+use crate::lexer::token::Token;
 use crate::utils::compute_line_col;
 use regex::Regex;
 

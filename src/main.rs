@@ -1,11 +1,9 @@
-mod manual_lex;
-mod regex_lex;
-mod token;
+mod lexer;
 mod utils;
 
-use manual_lex::lex_manually;
-use regex_lex::lex_with_regex;
-use token::Token;
+use lexer::manual_lex::lex_manually;
+use lexer::regex_lex::lex_with_regex;
+use lexer::token::Token;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
