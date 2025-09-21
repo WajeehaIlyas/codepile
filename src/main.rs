@@ -1,5 +1,6 @@
 mod lexer;
 mod utils;
+mod parser;
 
 use lexer::manual_lex::lex_manually;
 use lexer::regex_lex::lex_with_regex;
