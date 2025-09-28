@@ -12,7 +12,8 @@ pub enum TypeAnnotation {
     Int,
     Float,
     Bool,
-    Custom(String), // for user-defined or other named types
+    String,          // added explicit String variant
+    Custom(String),  // for user-defined or other named types
     Void,
 }
 
@@ -22,6 +23,7 @@ impl fmt::Display for TypeAnnotation {
             TypeAnnotation::Int => write!(f, "int"),
             TypeAnnotation::Float => write!(f, "float"),
             TypeAnnotation::Bool => write!(f, "bool"),
+            TypeAnnotation::String => write!(f, "string"), // handle new variant
             TypeAnnotation::Custom(s) => write!(f, "{}", s),
             TypeAnnotation::Void => write!(f, "void"),
         }
@@ -98,6 +100,7 @@ pub enum Statement {
         discr: Expression,
         cases: Vec<CaseStmt>,
     },
+    Block(Block),          // <--- NEW: allow blocks as statements
     Expr(Expression),
     Break,
     Continue,
@@ -134,11 +137,11 @@ pub enum Expression {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum AssignmentOp {
-    Assign, // =
-    AddAssign, // +=
-    SubAssign,
-    MulAssign,
-    DivAssign,
+    Assign,     // =
+    AddAssign,  // +=
+    SubAssign,  // -=
+    MulAssign,  // *=
+    DivAssign,  // /=
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -148,12 +151,21 @@ pub enum BinaryOp {
     Mul,
     Div,
     Mod,
+    // relational / equality / logical ops
+    Eq,   // ==
+    Ne,   // !=
+    Lt,   // <
+    Le,   // <=
+    Gt,   // >
+    Ge,   // >=
+    And,  // &&
+    Or,   // ||
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum UnaryOp {
     Neg,  // -x
-    Not,  // !x (if language supports logical not)
+    Not,  // !x
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -345,6 +357,10 @@ impl AstPrinter {
                 for c in cases { self.print_case(c); }
                 self.dec();
             }
+            Statement::Block(b) => {
+                self.writeln_indented("Block (statement):");
+                self.print_block(b);
+            }
             Statement::Expr(e) => { self.writeln_indented("ExprStmt:"); self.inc(); self.print_expression(e); self.dec(); }
             Statement::Break => self.writeln_indented("Break;"),
             Statement::Continue => self.writeln_indented("Continue;"),
@@ -452,6 +468,7 @@ impl Statement {
             Statement::For { init, cond, post, body } => { if let Some(i) = init { v.visit_expr(i); i.walk(v); } if let Some(c) = cond { v.visit_expr(c); c.walk(v); } if let Some(p) = post { v.visit_expr(p); p.walk(v); } body.walk(v); }
             Statement::DoWhile { body, cond } => { body.walk(v); v.visit_expr(cond); cond.walk(v); }
             Statement::Switch { discr, cases } => { v.visit_expr(discr); discr.walk(v); for c in cases { match c { CaseStmt::Case { literal: _, stmts } => for s in stmts { s.walk(v); }, CaseStmt::Default { stmts } => for s in stmts { s.walk(v); }, } } }
+            Statement::Block(b) => { b.walk(v); }
             Statement::Expr(e) => { v.visit_expr(e); e.walk(v); }
             Statement::Break | Statement::Continue => {}
         }
@@ -484,5 +501,3 @@ impl Literal {
         }
     }
 }
-
-
