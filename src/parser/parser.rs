@@ -2,7 +2,6 @@ use crate::lexer::token::Token;
 use crate::parser::ast;
 use crate::parser::errors::ParseError;
 
-
 pub struct Parser {
     tokens: Vec<Token>,
     pos: usize,
@@ -13,7 +12,6 @@ impl Parser {
         Parser { tokens, pos: 0 }
     }
 
-    
     // Entry point
     // Program -> { Declaration }*
     pub fn parse_program(&mut self) -> Result<ast::Program, ParseError> {
@@ -104,7 +102,6 @@ impl Parser {
         Ok(ast::Declarator { name, initializer })
     }
 
-  
     // Statements
     // Block -> '{' { Statement }* '}'
     // Statement -> ReturnStmt | IfStmt | LoopStmt | ExpressionStmt
@@ -116,7 +113,6 @@ impl Parser {
             Token::While => self.parse_while_stmt(),
             Token::For => self.parse_for_stmt(),
             Token::BraceL => {
-                // parse block and return as Statement::Block
                 let b = self.parse_block()?;
                 Ok(ast::Statement::Block(b))
             }
@@ -376,6 +372,7 @@ impl Parser {
         Ok(expr)
     }
 
+    // Correctly handle prefix and postfix unary operators
     fn parse_unary(&mut self) -> Result<ast::Expression, ParseError> {
         match self.peek() {
             Token::Not => {
@@ -394,16 +391,57 @@ impl Parser {
                     expr: Box::new(expr),
                 })
             }
-            _ => self.parse_primary(),
+            // Add prefix increment/decrement here
+            Token::Increment => {
+                self.advance();
+                let expr = self.parse_unary()?;
+                Ok(ast::Expression::Unary {
+                    op: ast::UnaryOp::Increment,
+                    expr: Box::new(expr),
+                })
+            }
+            Token::Decrement => {
+                self.advance();
+                let expr = self.parse_unary()?;
+                Ok(ast::Expression::Unary {
+                    op: ast::UnaryOp::Decrement,
+                    expr: Box::new(expr),
+                })
+            }
+            _ => self.parse_postfix_unary(), // Delegate to a new function for postfix
         }
+    }
+
+    // New function to handle postfix unary operators
+    fn parse_postfix_unary(&mut self) -> Result<ast::Expression, ParseError> {
+        let mut expr = self.parse_primary()?;
+        loop {
+            match self.peek() {
+                Token::Increment => {
+                    self.advance();
+                    expr = ast::Expression::Unary {
+                        op: ast::UnaryOp::Increment,
+                        expr: Box::new(expr),
+                    };
+                }
+                Token::Decrement => {
+                    self.advance();
+                    expr = ast::Expression::Unary {
+                        op: ast::UnaryOp::Decrement,
+                        expr: Box::new(expr),
+                    };
+                }
+                _ => break,
+            }
+        }
+        Ok(expr)
     }
 
     fn parse_primary(&mut self) -> Result<ast::Expression, ParseError> {
         match self.advance() {
             Some(Token::Identifier(name)) => {
-                // function call or identifier
                 if matches!(self.peek(), Token::ParenL) {
-                    self.advance(); // consume '('
+                    self.advance();
                     let args = self.parse_call_args()?;
                     self.expect_paren_r()?;
                     Ok(ast::Expression::Call {
@@ -444,7 +482,6 @@ impl Parser {
         }
         Ok(args)
     }
-
 
     // Token helpers & expectations
     fn current(&self) -> Option<&Token> {

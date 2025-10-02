@@ -1,4 +1,4 @@
-use crate::parser::error::ParseError; // adjust path to where error.rs is in your crate
+use crate::parser::errors::ParseError; // adjust path to where error.rs is in your crate
 
 /// Report parse error in a standard format.
 /// If you have line/column information available, use `report_with_pos`.

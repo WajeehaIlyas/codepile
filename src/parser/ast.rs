@@ -166,6 +166,8 @@ pub enum BinaryOp {
 pub enum UnaryOp {
     Neg,  // -x
     Not,  // !x
+    Increment, // ++x or x++
+    Decrement, // --x or x--
 }
 
 #[derive(Debug, Clone, PartialEq)]
