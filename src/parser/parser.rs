@@ -94,6 +94,7 @@ impl Parser {
 
     fn parse_declarator_with_name(&mut self, name: String) -> Result<ast::Declarator, ParseError> {
         let initializer = if matches!(self.peek(), Token::Assign) {
+            //e.g int x=4;
             self.advance();
             Some(self.parse_expression()?)
         } else {
@@ -170,37 +171,51 @@ impl Parser {
     }
 
     fn parse_for_stmt(&mut self) -> Result<ast::Statement, ParseError> {
-        self.advance(); // consume 'for'
-        self.expect_paren_l()?;
+    self.advance(); // consume 'for'
+    self.expect_paren_l()?;
 
-        let init = if !matches!(self.peek(), Token::Semicolon) {
-            Some(self.parse_expression()?)
+    let init = if matches!(self.peek(), Token::Int | Token::Float | Token::Bool | Token::String) {
+    
+        let ty = self.expect_type_token()?;
+        let name = self.expect_identifier()?;
+        let var_decl = self.parse_variable_decl_from_header(ty, name)?;
+        
+        if let Some(declarator) = var_decl.declarators.into_iter().next() {
+            declarator.initializer
         } else {
             None
-        };
+        }
+    } else if !matches!(self.peek(), Token::Semicolon) {
+    
+        return Err(ParseError::ExpectedTypeToken);
+    } else {
+        
         self.expect_semicolon()?;
+        None
+    };
 
-        let cond = if !matches!(self.peek(), Token::Semicolon) {
-            Some(self.parse_expression()?)
-        } else {
-            None
-        };
-        self.expect_semicolon()?;
+    let cond = if !matches!(self.peek(), Token::Semicolon) {
+        Some(self.parse_expression()?)
+    } else {
+        None
+    };
+    self.expect_semicolon()?;
 
-        let post = if !matches!(self.peek(), Token::ParenR) {
-            Some(self.parse_expression()?)
-        } else {
-            None
-        };
-        self.expect_paren_r()?;
-        let body = self.parse_block()?;
-        Ok(ast::Statement::For {
-            init,
-            cond,
-            post,
-            body,
-        })
-    }
+    let post = if !matches!(self.peek(), Token::ParenR) {
+        Some(self.parse_expression()?)
+    } else {
+        None
+    };
+    self.expect_paren_r()?;
+    let body = self.parse_block()?;
+    
+    Ok(ast::Statement::For {
+        init,
+        cond,
+        post,
+        body,
+    })
+}
 
     fn parse_expression_stmt(&mut self) -> Result<ast::Statement, ParseError> {
         let expr = self.parse_expression()?;
