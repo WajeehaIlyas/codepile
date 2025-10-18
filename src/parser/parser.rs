@@ -13,7 +13,7 @@ impl Parser {
     }
 
     // Entry point
-    // Program -> { Declaration }*
+    // Program -> { Declaration }
     pub fn parse_program(&mut self) -> Result<ast::Program, ParseError> {
         let mut decls = Vec::new();
         while !matches!(self.peek(), Token::EOF) {
