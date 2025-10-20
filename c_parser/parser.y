@@ -17,11 +17,13 @@ extern int yyerror(const char *s);
  * Semantic Value Definitions
  */
 %union {
-    Node node;
+    Node *node;
     char *str_val;
     long long int_val;
     double float_val;
 }
+
+%start program
 
 /*
  * Token Definitions (Terminals)
@@ -53,6 +55,8 @@ extern int yyerror(const char *s);
 /*
  * Precedence and Associativity (Lowest to Highest)
  */
+%nonassoc LOWER_THAN_ELSE
+%nonassoc ELSE
 %right ASSIGN PLUSASSIGN MINUSASSIGN
 %left OR
 %left AND
@@ -64,15 +68,14 @@ extern int yyerror(const char *s);
 %left SHIFTLEFT SHIFTRIGHT
 %left PLUS MINUS
 %left MUL DIV MOD
-%right NOT BITNOT UMINUS // Unary operators, right associative
-%left INCREMENT DECREMENT // Used for postfix
-%left PARENL BRACKETL // Function call and array access
+%nonassoc POSTFIX
+%right NOT BITNOT UMINUS
 
 /*
  * Type Definitions (Non-terminals)
  */
 %type <node> program declaration declaration_list type_specifier
-%type <node> function_definition function_signature parameter_list
+%type <node> function_definition parameter_list parameter_list_opt
 %type <node> statement_block statement statement_list
 %type <node> variable_declaration initializer_declaration for_init_clause
 %type <node> expression assignment_expression logic_or_expression logic_and_expression
@@ -125,10 +128,8 @@ type_specifier
 /* 2. Function Definitions */
 
 function_definition
-    : type_specifier IDENTIFIER PARENL parameter_list PARENR statement_block
+    : type_specifier IDENTIFIER PARENL parameter_list_opt PARENR statement_block
     { /* Function def: $1 type, $2 name, $4 params, $6 body */ }
-    | type_specifier IDENTIFIER PARENL PARENR statement_block
-    { /* Function def (no params) */ }
     ;
 
 parameter_list
@@ -136,6 +137,11 @@ parameter_list
     { /* Add parameter $4 to list $1 */ }
     | type_specifier IDENTIFIER
     { /* Start parameter list with $2 */ }
+    ;
+
+parameter_list_opt
+    : parameter_list
+    | /* empty */
     ;
 
 /* 3. Statements and Blocks */
@@ -160,7 +166,7 @@ statement
     | if_statement
     | while_statement
     | for_statement
-    | return_statement SEMICOLON
+    | return_statement
     | statement_block
     | SEMICOLON /* Empty statement */
     ;
@@ -180,16 +186,16 @@ variable_declaration
     ;
 
 return_statement
-    : RETURN expression
+    : RETURN expression SEMICOLON
     { /* Return expression $2 */ }
-    | RETURN
+    | RETURN SEMICOLON
     { /* Return void/default */ }
     ;
 
 /* 5. Control Flow */
 
 if_statement
-    : IF PARENL expression PARENR statement %prec UMINUS
+    : IF PARENL expression PARENR statement %prec LOWER_THAN_ELSE
     { /* If $3 then $5 */ }
     | IF PARENL expression PARENR statement ELSE statement
     { /* If $3 then $5 else $7 */ }
@@ -220,7 +226,6 @@ expression_opt
 
 expression
     : assignment_expression
-    | logic_or_expression
     ;
 
 assignment_expression
@@ -302,10 +307,10 @@ unary_expression
 postfix_expression
     : primary_expression
     | postfix_expression INCREMENT /* Postfix ++ */
-    | postfix_expression DECREMENT /* Postfix -- */
-    | postfix_expression PARENL argument_list PARENR /* Function call with args */
-    | postfix_expression PARENL PARENR /* Function call with no args */
-    | postfix_expression BRACKETL expression BRACKETR /* Array access */
+    | postfix_expression DECREMENT %prec POSTFIX
+    | postfix_expression PARENL argument_list PARENR %prec POSTFIX
+    | postfix_expression PARENL PARENR %prec POSTFIX
+    | postfix_expression BRACKETL expression BRACKETR %prec POSTFIX
     ;
 
 primary_expression
