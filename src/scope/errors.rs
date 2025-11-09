@@ -10,7 +10,6 @@ impl std::fmt::Display for Location {
     }
 }
 
-// --- Scope Error Definitions ---
 
 #[derive(Debug, Clone)]
 pub enum ScopeError {

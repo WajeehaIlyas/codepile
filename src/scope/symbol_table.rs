@@ -24,7 +24,6 @@ pub struct Symbol {
 }
 
 
-// Spaghetti Stack Node
 #[derive(Debug)]
 pub struct Scope {
     symbols: HashMap<String, Symbol>,
@@ -41,18 +40,15 @@ impl Scope {
 
     pub fn insert(&mut self, symbol: Symbol) -> Result<(), Symbol> {
         if self.symbols.contains_key(&symbol.name) {
-            // Re-definition found in the current scope. Return the existing symbol.
             let original_symbol = self.symbols.get(&symbol.name).unwrap().clone();
             Err(original_symbol) 
         } else {
-            // No conflict, insert the new symbol.
             self.symbols.insert(symbol.name.clone(), symbol);
             Ok(())
         }
     }
 
     pub fn lookup(&self, name: &str) -> Option<&Symbol> {
-        // Check current scope's HashMap
         if let Some(symbol) = self.symbols.get(name) {
             return Some(symbol);
         }
@@ -62,11 +58,9 @@ impl Scope {
             return parent_scope.lookup(name);
         }
 
-        // Not found in the entire chain
         None
     }
     
-    /// Looks up a symbol only in the current scope
     pub fn lookup_current(&self, name: &str) -> Option<&Symbol> {
         self.symbols.get(name)
     }

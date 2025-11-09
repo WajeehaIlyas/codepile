@@ -6,7 +6,7 @@ use crate::parser::ast::{
     Block, Statement, Expression, TypeAnnotation, Literal
 };
 
-// --- Helper Mappers ---
+
 impl SymbolType {
     pub fn from_ast_type(ast_type: &TypeAnnotation) -> Self {
         match ast_type {
@@ -19,7 +19,7 @@ impl SymbolType {
     }
 }
 
-// --- Scope Analyzer Core ---
+
 pub struct ScopeAnalyzer {
     current_scope: Box<Scope>,
     errors: Vec<ScopeError>,
@@ -36,7 +36,7 @@ impl ScopeAnalyzer {
         }
     }
 
-    // --- Location Helpers (placeholder)
+   
     fn get_func_location(&self, _f: &FunctionDecl) -> Location {
         self.default_loc.clone() 
     }
@@ -49,7 +49,7 @@ impl ScopeAnalyzer {
         self.default_loc.clone() 
     }
     
-    // --- Scope Stack Management---
+   
     fn push_scope(&mut self) {
         let parent = std::mem::replace(&mut self.current_scope, Box::new(Scope::new(None)));
         self.current_scope = Box::new(Scope::new(Some(parent)));
@@ -63,7 +63,7 @@ impl ScopeAnalyzer {
         }
     }
 
-    // --- Entry Point and Traversal Logic ---
+    
 
     pub fn analyze_program(&mut self, program: &Program) -> Result<(), Vec<ScopeError>> {
         for decl in &program.decls {
@@ -92,7 +92,7 @@ impl ScopeAnalyzer {
         let name = &func.name;
         let loc = self.get_func_location(func); 
 
-        // Check for global redefinition
+        
         if let Some(original_symbol) = self.current_scope.lookup_current(name) {
             self.errors.push(ScopeError::FunctionPrototypeRedefinition {
                 name: name.clone(),
@@ -100,7 +100,6 @@ impl ScopeAnalyzer {
                 original_location: original_symbol.declared_at.clone(),
             });
         } else {
-            // Insert Function prototype into global scope
             let new_symbol = Symbol {
                 name: name.clone(),
                 kind: SymbolKind::Function { 
@@ -112,14 +111,14 @@ impl ScopeAnalyzer {
             let _ = self.current_scope.insert(new_symbol);
         }
         
-        // 2. Analyze the function body
+     
         self.analyze_function_body(func);
     }
     
     fn analyze_function_body(&mut self, func: &FunctionDecl) {
         self.push_scope(); 
         
-        // Insert parameters into the new local scope
+
         for param in &func.params {
             // Fallback to default_loc since Parameter lacks a `loc` field
             let loc = self.default_loc.clone(); 
@@ -187,7 +186,6 @@ impl ScopeAnalyzer {
 
     fn analyze_statement(&mut self, stmt: &Statement) {
         match stmt {
-            // --- Scoping Statements ---
             Statement::Block(b) => {
                 self.push_scope();
                 self.analyze_block(b);
