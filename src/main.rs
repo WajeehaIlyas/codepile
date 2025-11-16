@@ -6,6 +6,7 @@ mod lexer;
 mod parser;
 mod utils;
 mod scope;
+mod type_checker;
 
 use lexer::manual_lex::lex_manually;
 use lexer::regex_lex::lex_with_regex;
@@ -14,6 +15,7 @@ use parser::parser::Parser;
 use parser::ast;
 use parser::bison_bridge;
 use scope::analyzer::ScopeAnalyzer;
+use type_checker::TypeChecker;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -71,8 +73,23 @@ fn main() {
 
                     let mut analyzer = ScopeAnalyzer::new();
                     match analyzer.analyze_program(&program_ast) {
-                        Ok(_) => {
+                        Ok(global_scope) => {
                             println!("Scope Analysis successful!");
+
+                            // --- TYPE CHECKING PHASE ---
+                            let mut type_checker = TypeChecker::new(&global_scope);
+                            match type_checker.check_program(&program_ast) {
+                                Ok(()) => {
+                                    println!("Type Checking successful!");
+                                }
+                                Err(errors) => {
+                                    eprintln!("Type Checking FAILED with {} errors:", errors.len());
+                                    for e in errors {
+                                        eprintln!("{}", e);
+                                    }
+                                    std::process::exit(1); 
+                                }
+                            }
                         }
                         Err(errors) => {
                             eprintln!("Scope Analysis FAILED with {} errors:", errors.len());

@@ -1,11 +1,9 @@
 use super::symbol_table::{Scope, Symbol, SymbolKind, Type as SymbolType};
 use super::errors::{ScopeError, Location}; 
-
 use crate::parser::ast::{
     Program, Declaration, FunctionDecl, Parameter, VariableDecl, Declarator,
     Block, Statement, Expression, TypeAnnotation, Literal
 };
-
 
 impl SymbolType {
     pub fn from_ast_type(ast_type: &TypeAnnotation) -> Self {
@@ -19,7 +17,6 @@ impl SymbolType {
     }
 }
 
-
 pub struct ScopeAnalyzer {
     current_scope: Box<Scope>,
     errors: Vec<ScopeError>,
@@ -31,12 +28,10 @@ impl ScopeAnalyzer {
         ScopeAnalyzer {
             current_scope: Box::new(Scope::new(None)),
             errors: Vec::new(),
-            // Re-initialize the fallback location
             default_loc: Location { line: 0, column: 0 }, 
         }
     }
 
-   
     fn get_func_location(&self, _f: &FunctionDecl) -> Location {
         self.default_loc.clone() 
     }
@@ -49,10 +44,9 @@ impl ScopeAnalyzer {
         self.default_loc.clone() 
     }
     
-   
     fn push_scope(&mut self) {
-        let parent = std::mem::replace(&mut self.current_scope, Box::new(Scope::new(None)));
-        self.current_scope = Box::new(Scope::new(Some(parent)));
+        let new_scope = Scope::new(Some(self.current_scope.clone()));
+        self.current_scope = Box::new(new_scope);
     }
 
     fn pop_scope(&mut self) {
@@ -63,15 +57,14 @@ impl ScopeAnalyzer {
         }
     }
 
-    
-
-    pub fn analyze_program(&mut self, program: &Program) -> Result<(), Vec<ScopeError>> {
+    pub fn analyze_program(&mut self, program: &Program) -> Result<Scope, Vec<ScopeError>> {
         for decl in &program.decls {
             self.analyze_declaration(decl);
         }
 
         if self.errors.is_empty() {
-            Ok(())
+            let root_scope = std::mem::replace(&mut self.current_scope, Box::new(Scope::new(None)));
+            Ok(*root_scope) 
         } else {
             Err(std::mem::take(&mut self.errors))
         }
@@ -92,7 +85,6 @@ impl ScopeAnalyzer {
         let name = &func.name;
         let loc = self.get_func_location(func); 
 
-        
         if let Some(original_symbol) = self.current_scope.lookup_current(name) {
             self.errors.push(ScopeError::FunctionPrototypeRedefinition {
                 name: name.clone(),
@@ -111,26 +103,23 @@ impl ScopeAnalyzer {
             let _ = self.current_scope.insert(new_symbol);
         }
         
-     
         self.analyze_function_body(func);
     }
     
     fn analyze_function_body(&mut self, func: &FunctionDecl) {
-        self.push_scope(); 
-        
+        let mut func_scope = Scope::new(Some(self.current_scope.clone()));
 
         for param in &func.params {
-            // Fallback to default_loc since Parameter lacks a `loc` field
-            let loc = self.default_loc.clone(); 
+            let loc = self.default_loc.clone();
             let new_symbol = Symbol {
                 name: param.name.clone(),
                 kind: SymbolKind::Variable { 
-                    type_info: SymbolType::from_ast_type(&param.ty) 
+                    type_info: SymbolType::from_ast_type(&param.ty),
                 },
                 declared_at: loc.clone(),
             };
-            
-            if let Err(original_symbol) = self.current_scope.insert(new_symbol) {
+
+            if let Err(original_symbol) = func_scope.insert(new_symbol) {
                 self.errors.push(ScopeError::VariableRedefinition {
                     name: param.name.clone(),
                     current_location: loc.clone(),
@@ -139,9 +128,14 @@ impl ScopeAnalyzer {
             }
         }
 
+        let saved_scope = std::mem::replace(&mut self.current_scope, Box::new(func_scope));
+
         self.analyze_block(&func.body);
 
-        self.pop_scope(); 
+        let func_scope_box = std::mem::replace(&mut self.current_scope, saved_scope);
+        let func_scope_owned: Scope = *func_scope_box;
+
+        self.current_scope.child_scopes.insert(func.name.clone(), func_scope_owned);
     }
     
     fn analyze_declarators(&mut self, declarators: &[Declarator], ty: &TypeAnnotation, is_global: bool) {
@@ -203,8 +197,6 @@ impl ScopeAnalyzer {
                 
                 self.pop_scope(); 
             }
-            
-            // --- Control Flow & Expression Statements ---
             Statement::Return(expr_opt) => {
                 if let Some(expr) = expr_opt { self.analyze_expression(expr); }
             }
@@ -225,7 +217,6 @@ impl ScopeAnalyzer {
                 self.analyze_expression(discr);
                 for case in cases {
                     match case {
-            
                         crate::parser::ast::CaseStmt::Case { stmts, .. } |
                         crate::parser::ast::CaseStmt::Default { stmts } => {
                             for s in stmts { self.analyze_statement(s); }
@@ -242,7 +233,6 @@ impl ScopeAnalyzer {
 
     fn analyze_expression(&mut self, expr: &Expression) {
         match expr {
-            
             Expression::Assignment { left, op: _, right } => {
                 self.analyze_expression(left);
                 self.analyze_expression(right);
@@ -268,7 +258,6 @@ impl ScopeAnalyzer {
             Expression::Grouping(inner) => {
                 self.analyze_expression(inner);
             }
-            
             Expression::Call { callee, args } => { 
                 let loc = self.get_identifier_location(callee); 
                 

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use crate::scope::errors::Location; 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Type {
     Int, 
     Float, 
@@ -23,11 +23,11 @@ pub struct Symbol {
     pub declared_at: Location,
 }
 
-
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Scope {
     symbols: HashMap<String, Symbol>,
     parent: Option<Box<Scope>>,
+    pub child_scopes: HashMap<String, Scope>,
 }
 
 impl Scope {
@@ -35,13 +35,14 @@ impl Scope {
         Scope {
             symbols: HashMap::new(),
             parent,
+            child_scopes: HashMap::new(),
         }
     }
 
     pub fn insert(&mut self, symbol: Symbol) -> Result<(), Symbol> {
         if self.symbols.contains_key(&symbol.name) {
             let original_symbol = self.symbols.get(&symbol.name).unwrap().clone();
-            Err(original_symbol) 
+            Err(original_symbol)
         } else {
             self.symbols.insert(symbol.name.clone(), symbol);
             Ok(())
@@ -53,7 +54,6 @@ impl Scope {
             return Some(symbol);
         }
         
-        // Recursively check the parent scope
         if let Some(parent_scope) = &self.parent {
             return parent_scope.lookup(name);
         }
@@ -67,5 +67,9 @@ impl Scope {
 
     pub fn take_parent(&mut self) -> Option<Box<Scope>> {
         self.parent.take()
+    }
+    
+    pub fn get_child_scope(&self, name: &str) -> Option<&Scope> {
+        self.child_scopes.get(name)
     }
 }
